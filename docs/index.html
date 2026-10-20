@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bibtools</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fa;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --text-muted: #656d76;
+    --del-bg: #ffebe9;
+    --del-line: #cf222e;
+    --add-bg: #dafbe1;
+    --add-line: #116329;
+    --hunk-bg: #ddf4ff;
+    --hunk-text: #0969da;
+    --accent: #0969da;
+    --badge-fix-bg: #dafbe1;
+    --badge-fix-text: #116329;
+    --badge-fix-border: #aceebb;
+    --badge-upgrade-bg: #ddf4ff;
+    --badge-upgrade-text: #0969da;
+    --badge-upgrade-border: #80ccff;
+    --badge-dup-bg: #fff8c5;
+    --badge-dup-text: #9a6700;
+    --badge-dup-border: #d4a72c;
+    --badge-notfound-bg: #ffebe9;
+    --badge-notfound-text: #cf222e;
+    --badge-notfound-border: #ff8182;
+    --badge-ok-bg: #f6f8fa;
+    --badge-ok-text: #656d76;
+    --badge-ok-border: #d0d7de;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --del-bg: #3d1f28;
+      --del-line: #ff7b72;
+      --add-bg: #1a3326;
+      --add-line: #7ee787;
+      --hunk-bg: #1c2536;
+      --hunk-text: #79c0ff;
+      --accent: #58a6ff;
+      --badge-fix-bg: #2ea04333;
+      --badge-fix-text: #7ee787;
+      --badge-fix-border: #2ea04366;
+      --badge-upgrade-bg: #1f6feb33;
+      --badge-upgrade-text: #58a6ff;
+      --badge-upgrade-border: #1f6feb66;
+      --badge-dup-bg: #d2992233;
+      --badge-dup-text: #e3b341;
+      --badge-dup-border: #d2992266;
+      --badge-notfound-bg: #8e131333;
+      --badge-notfound-text: #ff7b72;
+      --badge-notfound-border: #da363366;
+      --badge-ok-bg: #30363d;
+      --badge-ok-text: #8b949e;
+      --badge-ok-border: #30363d;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .header {
+    padding: 2rem 0 0.5rem;
+    text-align: center;
+  }
+
+  .header h1 { font-size: 2rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .header p { color: var(--text-muted); }
+
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .github-link:hover { color: var(--accent); }
+
+  .github-link svg { fill: currentColor; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 0 1rem 2rem; }
+
+  .intro {
+    color: var(--text-muted);
+    margin: 2rem 0 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section { margin-bottom: 2.5rem; }
+
+  .demo img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .install-step { margin-bottom: 1rem; }
+  .install-step p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.4rem; }
+
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    font-family: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    overflow: hidden;
+  }
+
+  .code-block code {
+    flex: 1;
+    min-width: 0;
+    display: block;
+    user-select: all;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: var(--text-muted); }
+
+  .diff-card {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+
+  .diff-header {
+    background: var(--surface);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .diff-title {
+    flex: 1 1 18rem;
+    min-width: 0;
+    font-weight: 600;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+
+  .diff-title a { overflow-wrap: anywhere; }
+
+  .diff-badge {
+    font-size: 0.75rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+  }
+
+  .badge-fix { background: var(--badge-fix-bg); color: var(--badge-fix-text); border: 1px solid var(--badge-fix-border); }
+  .badge-upgrade { background: var(--badge-upgrade-bg); color: var(--badge-upgrade-text); border: 1px solid var(--badge-upgrade-border); }
+  .badge-duplicate { background: var(--badge-dup-bg); color: var(--badge-dup-text); border: 1px solid var(--badge-dup-border); }
+  .badge-notfound { background: var(--badge-notfound-bg); color: var(--badge-notfound-text); border: 1px solid var(--badge-notfound-border); }
+  .badge-ok { background: var(--badge-ok-bg); color: var(--badge-ok-text); border: 1px solid var(--badge-ok-border); }
+
+  .diff-body {
+    overflow-x: auto;
+  }
+
+  .diff-table {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-family: ui-monospace, 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .diff-gutter,
+  .diff-content {
+    white-space: pre;
+    vertical-align: top;
+  }
+
+  .diff-gutter {
+    width: 2.5rem;
+    padding: 0 0.75rem 0 1rem;
+    user-select: none;
+    color: var(--text-muted);
+  }
+
+  .diff-content { padding: 0 1rem 0 0; }
+
+  .diff-row.del { background: var(--del-bg); color: var(--del-line); }
+  .diff-row.add { background: var(--add-bg); color: var(--add-line); }
+  .diff-row.ctx { color: var(--text-muted); }
+
+  .stats { font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem; }
+  .stats .add-count { color: var(--add-line); }
+  .stats .del-count { color: var(--del-line); }
+
+  .diff-body a { color: var(--accent); }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.6rem 1.25rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .tab-btn:hover {
+    color: var(--text);
+  }
+
+  .tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-panel {
+    display: none;
+  }
+
+  .tab-panel.active {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="container">
+    <h1>bibtools</h1>
+    <p>A bibliography toolkit for LaTeX, built as agent skills.</p>
+    <a class="github-link" href="https://github.com/mathpluscode/bibtools" target="_blank" rel="noopener">
+      <svg height="18" width="18" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+</div>
+
+<div class="container">
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="bibtidy" onclick="switchTab('bibtidy')">bibtidy</button>
+</div>
+
+<div id="tab-bibtidy" class="tab-panel active">
+
+<div class="section">
+  <div class="demo">
+    <img src="bibtidy_demo.gif" alt="bibtidy demo" width="1600" height="1200">
+  </div>
+</div>
+
+<p class="intro">bibtidy cross-checks BibTeX entries against Google Scholar, CrossRef, and conference/journal sites. It upgrades arXiv/bioRxiv preprints to published versions (even when the title changed upon publication), corrects metadata (authors, pages, venues), and flags duplicate entries.</p>
+
+<div class="section">
+  <h2 class="section-title">Install</h2>
+
+  <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem;">Claude Code</h3>
+
+  <div class="install-step">
+    <p>Add the marketplace source:</p>
+    <div class="code-block"><code>/plugin marketplace add mathpluscode/bibtools</code><button class="copy-btn" type="button" onclick="copyCode(this)">Copy</button></div>
+  </div>
+
+  <div class="install-step">
+    <p>Install the plugin:</p>
+    <div class="code-block"><code>/plugin install bibtools@mathpluscode-bibtools</code><button class="copy-btn" type="button" onclick="copyCode(this)">Copy</button></div>
+  </div>
+
+  <div class="install-step">
+    <p>Reload plugins:</p>
+    <div class="code-block"><code>/reload-plugins</code><button class="copy-btn" type="button" onclick="copyCode(this)">Copy</button></div>
+  </div>
+
+  <div class="install-step">
+    <p>To update later, refresh the marketplace and reload:</p>
+    <div class="code-block"><code>/plugin marketplace update mathpluscode-bibtools</code><button class="copy-btn" type="button" onclick="copyCode(this)">Copy</button></div>
+    <div class="code-block" style="margin-top: 0.4rem;"><code>/reload-plugins</code><button class="copy-btn" type="button" onclick="copyCode(this)">Copy</button></div>
+  </div>
+
+  <h3 style="font-size: 1rem; font-weight: 600; margin: 1.5rem 0 0.75rem;">Codex</h3>
+
+  <div class="install-step">
+    <p>Tell Codex to fetch and follow the install instructions:</p>
+    <div class="code-block"><code>Fetch and follow instructions from https://raw.githubusercontent.com/mathpluscode/bibtools/main/.codex/INSTALL.md</code><button class="copy-btn" type="button" onclick="copyCode(this)">Copy</button></div>
+  </div>
+
+  <div class="install-step">
+    <p>To update later, ask Codex to pull the latest version (start a new Codex session afterwards so the refreshed <code>SKILL.md</code> is loaded into context):</p>
+    <div class="code-block"><code>Reinstall/update my `bibtidy` skill from https://github.com/mathpluscode/bibtools, discarding local changes in `~/.codex/bibtools` and replacing `~/.codex/skills/bibtidy` with the correct symlinked setup.</code><button class="copy-btn" type="button" onclick="copyCode(this)">Copy</button></div>
+  </div>
+
+</div>
+
+<div class="section">
+  <h2 class="section-title">Usage</h2>
+
+  <div class="install-step">
+    <p>In both Claude Code and Codex, use:</p>
+    <div class="code-block"><code>/bibtidy refs.bib</code><button class="copy-btn" type="button" onclick="copyCode(this)">Copy</button></div>
+  </div>
+
+  <p class="intro">bibtidy's output is non-deterministic. The same <code>.bib</code> file can yield different fixes across runs, and Claude Code and Codex may reach different conclusions on the same entry, due to variability in search results, LLM sampling, and differences between the two agents' underlying models. Every change ships with <code>% bibtidy:</code> URLs for verification &mdash; treat the output as a reviewed first draft, not a final answer.</p>
+
+</div>
+
+<div class="section">
+  <h2 class="section-title">Examples</h2>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Hallucinated reference (<a href="https://openreview.net/forum?id=75SJoY9gTN" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://openreview.net/forum?id=75SJoY9gTN</a>)</span>
+    <span class="stats"><span class="add-count">+1</span> <span class="del-count">-6</span></span>
+    <span class="diff-badge badge-notfound">not found</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: NOT FOUND — no matching paper on CrossRef or web search; verify this reference exists</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">@article{wang2021identity,</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  title={On the identity of the representation learned by pre-trained language models},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  author={Wang, Zijie J and Choi, Yuhao and Wei, Dongyeop},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  journal={arXiv preprint arXiv:2109.01819},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  year={2021}</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Hallucinated metadata (real paper, wrong title and authors)</span>
+    <span class="stats"><span class="add-count">+4</span> <span class="del-count">-2</span></span>
+    <span class="diff-badge badge-fix">fix</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: <a href="https://openreview.net/forum?id=HSi4VetQLj" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://openreview.net/forum?id=HSi4VetQLj</a></td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: corrected title and authors</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@inproceedings{aichberger2025semantically,</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  title={Semantically Diverse Language Generation},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  author={Aichberger, Franz and Chen, Lily and Smith, John},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  title={Improving Uncertainty Estimation through Semantically Diverse Language Generation},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  author={Aichberger, Lukas and Schweighofer, Kajetan and Ielanskyi, Mykyta and Hochreiter, Sepp},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  booktitle={International Conference on Learning Representations},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2025}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Wrong co-author (editor listed as author)</span>
+    <span class="stats"><span class="add-count">+5</span> <span class="del-count">-3</span></span>
+    <span class="diff-badge badge-fix">author fix</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: <a href="https://jmlr.org/papers/v6/hyvarinen05a.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://jmlr.org/papers/v6/hyvarinen05a.html</a></td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: removed &quot;Dayan, Peter&quot; — journal editor, not co-author; number 4 → 24</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@article{hyvarinen2005estimation,</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  title={Estimation of non-normalized statistical models by score matching.},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  author={Hyv{\&quot;a}rinen, Aapo and Dayan, Peter},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  title={Estimation of non-normalized statistical models by score matching},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  author={Hyv{\&quot;a}rinen, Aapo},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  journal={Journal of Machine Learning Research},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  volume={6},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  number={4},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  number={24},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2005}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">arXiv preprint with published version available</span>
+    <span class="stats"><span class="add-count">+5</span> <span class="del-count">-3</span></span>
+    <span class="diff-badge badge-upgrade">preprint &#8594; published</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: <a href="https://openreview.net/forum?id=PqvMRDCJT9t" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://openreview.net/forum?id=PqvMRDCJT9t</a></td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: published at ICLR 2023 (was arXiv preprint)</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">@article{lipman2022flow,</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">@inproceedings{lipman2022flow,</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  title={Flow matching for generative modeling},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  author={Lipman, Yaron and Chen, Ricky TQ and Ben-Hamu, Heli and Nickel, Maximilian and Le, Matt},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  journal={arXiv preprint arXiv:2210.02747},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  year={2022}</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  booktitle={International Conference on Learning Representations},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  year={2023}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Formatting issues (DOI URL prefix, single-hyphen pages)</span>
+    <span class="stats"><span class="add-count">+4</span> <span class="del-count">-2</span></span>
+    <span class="diff-badge badge-fix">formatting fix</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: <a href="https://doi.org/10.48550/arXiv.2006.11239" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://doi.org/10.48550/arXiv.2006.11239</a></td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: stripped DOI URL prefix, fixed page range hyphen</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@article{ho2020denoising,</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  title={Denoising diffusion probabilistic models},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  author={Ho, Jonathan and Jain, Ajay and Abbeel, Pieter},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  journal={Advances in Neural Information Processing Systems},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  volume={33},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  pages={6840-6851},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  pages={6840--6851},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2020},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  doi={<a href="https://doi.org/10.48550/arXiv.2006.11239" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://doi.org/10.48550/arXiv.2006.11239</a>}</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  doi={10.48550/arXiv.2006.11239}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Duplicate pair (bioRxiv preprint + published version)</span>
+    <span class="stats"><span class="add-count">+4</span> <span class="del-count">-2</span></span>
+    <span class="diff-badge badge-duplicate">duplicate detected</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: DUPLICATE of watson2023novo — consider removing</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@article{watson2022broadly,</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  title={Broadly applicable and accurate protein design by integrating structure prediction networks and diffusion generative models},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  author={Watson, Joseph L and Juergens, David and Bennett, Nathaniel R and Trippe, Brian L and Yim, Jason and Eisenach, Helen E and Ahern, Woody and Borst, Andrew J and Ragotte, Robert J and Milles, Lukas F and others},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  journal={BioRxiv},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  pages={2022--12},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2022},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  publisher={Cold Spring Harbor Laboratory}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content"></td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@article{watson2023novo,</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  title={De novo design of protein structure and function with RFdiffusion},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  author={Watson, Joseph L and Juergens, David and Bennett, Nathaniel R and Trippe, Brian L and Yim, Jason and Eisenach, Helen E and Ahern, Woody and Borst, Andrew J and Ragotte, Robert J and Milles, Lukas F and others},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  author={Watson, Joseph L. and Juergens, David and Bennett, Nathaniel R. and Trippe, Brian L. and Yim, Jason and Eisenach, Helen E. and Ahern, Woody and Borst, Andrew J. and Ragotte, Robert J. and Milles, Lukas F. and Wicky, Basile I. M. and Hanikel, Nikita and Pellock, Samuel J. and Courbet, Alexis and Sheffler, William and Wang, Jue and Venkatesh, Preetham and Sappington, Isaac and Torres, Susana Vázquez and Lauko, Anna and De Bortoli, Valentin and Mathieu, Emile and Ovchinnikov, Sergey and Barzilay, Regina and Jaakkola, Tommi S. and DiMaio, Frank and Baek, Minkyung and Baker, David},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  journal={Nature},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  volume={620},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  pages={1089--1100},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2023},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  publisher={Nature Publishing Group UK London}</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  publisher={Nature Publishing Group UK London},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  number={7976}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Wrong page numbers (should be corrected via CrossRef)</span>
+    <span class="stats"><span class="add-count">+3</span> <span class="del-count">-1</span></span>
+    <span class="diff-badge badge-fix">page fix</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: <a href="https://doi.org/10.1109/iccv48922.2021.00717" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://doi.org/10.1109/iccv48922.2021.00717</a></td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: corrected page range 7262--7272 → 7242--7252</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@inproceedings{strudel2021segmenter,</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  title={Segmenter: Transformer for semantic segmentation},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  author={Strudel, Robin and Garcia, Ricardo and Laptev, Ivan and Schmid, Cordelia},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  booktitle={Proceedings of the IEEE/CVF international conference on computer vision},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  pages={7262--7272},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  pages={7242--7252},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2021}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">arXiv preprint where published title changed</span>
+    <span class="stats"><span class="add-count">+6</span> <span class="del-count">-3</span></span>
+    <span class="diff-badge badge-upgrade">preprint &#8594; published</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: <a href="https://doi.org/10.1038/s41598-023-34341-2" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://doi.org/10.1038/s41598-023-34341-2</a></td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: updated from arXiv to published version (Scientific Reports 2023), title updated</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@article{khader2022medical,</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  title={Medical Diffusion--Denoising Diffusion Probabilistic Models for 3D Medical Image Generation},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  title={Denoising Diffusion Probabilistic Models for 3D Medical Image Generation},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  author={Khader, Firas and Mueller-Franzes, Gustav and Arasteh, Soroosh Tayebi and Han, Tianyu and Haarburger, Christoph and Schulze-Hagen, Maximilian and Schad, Philipp and Engelhardt, Sandy and Baessler, Bettina and Foersch, Sebastian and others},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  journal={arXiv preprint arXiv:2211.03364},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  year={2022}</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  journal={Scientific Reports},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  volume={13},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  year={2023}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Author list uses &quot;and others&quot; instead of full list</span>
+    <span class="stats"><span class="add-count">+3</span> <span class="del-count">-1</span></span>
+    <span class="diff-badge badge-duplicate">duplicate detected</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: <a href="https://doi.org/10.1109/ICCV51070.2023.00371" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">https://doi.org/10.1109/ICCV51070.2023.00371</a></td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">% bibtidy: kept authoritative version; incomplete duplicate commented out above</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@inproceedings{kirillov2023segment,</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  title={Segment anything},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  author={Kirillov, Alexander and Mintun, Eric and Ravi, Nikhila and Mao, Hanzi and Rolland, Chloe and Gustafson, Laura and Xiao, Tete and Whitehead, Spencer and Berg, Alexander C and Lo, Wan-Yen and others},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  author={Kirillov, Alexander and Mintun, Eric and Ravi, Nikhila and Mao, Hanzi and Rolland, Chloe and Gustafson, Laura and Xiao, Tete and Whitehead, Spencer and Berg, Alexander C. and Lo, Wan-Yen and Doll{\'a}r, Piotr and Girshick, Ross},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  booktitle={Proceedings of the IEEE/CVF International Conference on Computer Vision},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  pages={3992--4003},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2023},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  doi={10.1109/ICCV51070.2023.00371}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Outdated abstract to be updated with published version with DOI change</span>
+    <span class="stats"><span class="add-count">+6</span> <span class="del-count">-8</span></span>
+    <span class="diff-badge badge-fix">fix</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@article{shad2023generalizable,</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  title={A Generalizable Deep Learning System for Cardiac MRI},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  author={Shad, Rohan and Zakka, Cyril R and Kaur, Dhamanpreet and Mongan, John and Kallianos, Kimberly G and Filice, Ross and Khandwala, Nishith and Eng, David and Langlotz, Curtis and Hiesinger, William},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  journal={Circulation},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  volume={148},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  number={Suppl\_1},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  pages={A13588--A13588},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  year={2023},</td></tr>
+      <tr class="diff-row del"><td class="diff-gutter">-</td><td class="diff-content">  doi={10.1161/circ.148.suppl\_1.13588}</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  title={A generalizable deep learning system for cardiac MRI},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  author={Shad, Rohan and Zakka, Cyril and Kaur, Dhamanpreet and Mathur, Mrudang and Fong, Robyn and Cho, Joseph and Filice, Ross Warren and Mongan, John and Kallianos, Kimberly and Khandwala, Nishith and others},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  journal={Nature Biomedical Engineering},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  pages={1--16},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  year={2026},</td></tr>
+      <tr class="diff-row add"><td class="diff-gutter">+</td><td class="diff-content">  publisher={Nature Publishing Group UK London}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Correct entry (should be left unchanged)</span>
+    <span class="diff-badge badge-ok">unchanged</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@inproceedings{vaswani2017attention,</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  title={Attention is All you Need},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  author={Vaswani, Ashish and Shazeer, Noam and Parmar, Niki and Uszkoreit, Jakob and Jones, Llion and Gomez, Aidan N and Kaiser, {\L}ukasz and Polosukhin, Illia},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  booktitle={Advances in Neural Information Processing Systems},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  volume={30},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2017}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<div class="diff-card">
+  <div class="diff-header">
+    <span class="diff-title">Published article should not be downgraded to preprint</span>
+    <span class="diff-badge badge-ok">unchanged</span>
+  </div>
+  <div class="diff-body">
+    <table class="diff-table"><tbody>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">@article{tzou2022coronavirus,</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  title={Coronavirus Resistance Database (CoV-RDB): SARS-CoV-2 susceptibility to monoclonal antibodies, convalescent plasma, and plasma from vaccinated persons},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  author={Tzou, Philip L and Tao, Kaiming and Pond, Sergei L Kosakovsky and Shafer, Robert W},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  journal={Plos one},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  volume={17},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  number={3},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  pages={e0261045},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  year={2022},</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">  publisher={Public Library of Science San Francisco, CA USA}</td></tr>
+      <tr class="diff-row ctx"><td class="diff-gutter">&nbsp;</td><td class="diff-content">}</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+function switchTab(id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab-btn[data-tab="' + id + '"]').classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+function copyCode(btn) {
+  const code = btn.previousElementSibling.textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  }).catch(() => {
+    btn.textContent = 'Copy failed';
+    setTimeout(() => btn.textContent = 'Copy', 1500);
+  });
+}
+</script>
+
+</body>
+</html>

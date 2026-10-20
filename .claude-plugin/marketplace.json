@@ -1,0 +1,22 @@
+{
+  "name": "bibtools",
+  "owner": {
+    "name": "Yunguan Fu"
+  },
+  "metadata": {
+    "description": "A bibliography toolkit for LaTeX, built as agent skills",
+    "repository": "https://github.com/mathpluscode/bibtools",
+    "homepage": "https://bib.tools"
+  },
+  "plugins": [
+    {
+      "name": "bibtools",
+      "source": "./",
+      "description": "A bibliography toolkit for LaTeX",
+      "version": "1.7.6",
+      "keywords": ["bibtex", "bibliography", "latex", "overleaf", "academic", "reference", "citation"],
+      "category": "academic",
+      "license": "MIT"
+    }
+  ]
+}
